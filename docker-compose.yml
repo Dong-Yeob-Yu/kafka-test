@@ -1,0 +1,25 @@
+# 컨테이너(서비스) 정의
+services:
+
+  # 카프카 서비스
+  kafka:
+    image: "apache/kafka:3.9.0"
+    container_name: kafka
+    ports:
+      - "9092:9092"
+      - "9093:9093"
+    environment:
+      KAFKA_PROCESS_ROLES: broker, controller                                           # Kraft 모드 활성화
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER                                       # 컨트롤러 노드에서 사용할 리스너 이름 지정
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093               # Kafka 브로커가 외부 클라이언트와 컨트롤러 통신을 위해 사용하는 리스너
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT    # 각 리스너가 사용할 보안 프로토콜 지정
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT                                       # 브로커간 통신에서 사용할 리스너
+      KAFKA_LOG_DIRS: /var/lib/kafka/data                                               # 브로커 데이터가 저장될 디렉토리
+      KAFKA_CLUSTER_ID: "hYiSnflwTKagsUxKkTPffw"                                        # 클러스터 ID를 고정으로 설정
+      KAFKA_NODE_ID: 1                                                                  # 노드 ID 추가
+      KAFKA_CONTROLLER_QUORUM_BOOTSTRAP_SERVERS: "kafka:9093"                           # 컨트롤러 부트스트랩 서버 설정
+    volumes:
+      - kafka_data:/var/lib/kafka/data
+
+volumes:
+  kafka_data: # 네임드 볼륨 정의
