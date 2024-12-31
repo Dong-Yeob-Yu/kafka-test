@@ -3,7 +3,7 @@ services:
 
   # 카프카 서비스
   kafka:
-    image: "apache/kafka:3.9.0"
+    image: "apache/kafka:3.8.0"
     container_name: kafka
     ports:
       - "9092:9092"
@@ -11,15 +11,27 @@ services:
     environment:
       KAFKA_PROCESS_ROLES: broker, controller                                           # Kraft 모드 활성화
       KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER                                       # 컨트롤러 노드에서 사용할 리스너 이름 지정
-      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093               # Kafka 브로커가 외부 클라이언트와 컨트롤러 통신을 위해 사용하는 리스너
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093               # 내부 통신, kafka 브로커가 리스닝할 네트워크 인터페이스와 포트
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092                            # 외부 클라이언트 접근, 클라이언트가 '접근 가능'한 공인 IP또는 DNS 이름을 지정
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT    # 각 리스너가 사용할 보안 프로토콜 지정
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT                                       # 브로커간 통신에서 사용할 리스너
       KAFKA_LOG_DIRS: /var/lib/kafka/data                                               # 브로커 데이터가 저장될 디렉토리
       KAFKA_CLUSTER_ID: "hYiSnflwTKagsUxKkTPffw"                                        # 클러스터 ID를 고정으로 설정
       KAFKA_NODE_ID: 1                                                                  # 노드 ID 추가
-      KAFKA_CONTROLLER_QUORUM_BOOTSTRAP_SERVERS: "kafka:9093"                           # 컨트롤러 부트스트랩 서버 설정
+      KAFKA_CONTROLLER_QUORUM_BOOTSTRAP_SERVERS: "localhost:9093"                       # 컨트롤러 부트스트랩 서버 설정
+      KAFKA_CONTROLLER_QUORUM_VOTERS: "1@localhost:9093"                                # 노드 ID@컨트롤러 주소 형식
     volumes:
       - kafka_data:/var/lib/kafka/data
+
+  kafka-test:
+    container_name: kafka-test
+    build:
+      context: ./
+      dockerfile: DockerFile_webService
+    ports:
+      - "8080:8080"
+#    environment:
+
 
 volumes:
   kafka_data: # 네임드 볼륨 정의
