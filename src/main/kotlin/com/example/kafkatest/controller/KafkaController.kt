@@ -1,6 +1,7 @@
 package com.example.kafkatest.controller
 
 import com.example.kafkatest.service.KafkaService
+import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
@@ -13,7 +14,7 @@ class KafkaController(
 ) {
 
     @GetMapping("/send")
-    fun sendMessage(@RequestParam message: String) {
-        kafkaService.sendMessage("test-topic", message)
+    fun sendMessage(@RequestParam message: String): ResponseEntity<String> {
+        return ResponseEntity.ok().body(kafkaService.sendMessage("test-topic", message))
     }
 }

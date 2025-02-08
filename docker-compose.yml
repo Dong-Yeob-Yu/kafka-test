@@ -1,6 +1,24 @@
 # 컨테이너(서비스) 정의
 services:
 
+  mariaDB_database:
+    image: mariadb:latest                                         # mysql 최신버전을 도커 허브에서 가져옴
+    ports:
+      - 3307:3306
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+    volumes:
+      - mariadb-data:/var/lib/mysql                          # MariaDB 데이터 저장 경로'
+      - ./init-scripts:/docker-entrypoint-initdb.d           # 초기화 SQL 스크립트 실행
+    restart: always
+    healthcheck: # 10초마다 헬스체크
+      test: [ "CMD-SHELL", "mariadb -u root -proot -e 'SELECT 1'" ]
+      interval: 3s
+      timeout: 15s
+      retries: 6
+    networks:
+      - kafka
+
   # 카프카 서비스
   kafka:
     image: "apache/kafka:3.8.0"
@@ -12,7 +30,7 @@ services:
       KAFKA_PROCESS_ROLES: broker, controller                                           # Kraft 모드 활성화
       KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER                                       # 컨트롤러 노드에서 사용할 리스너 이름 지정
       KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093               # 내부 통신, kafka 브로커가 리스닝할 네트워크 인터페이스와 포트
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092                            # 외부 클라이언트 접근, 클라이언트가 '접근 가능'한 공인 IP또는 DNS 이름을 지정
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092                                # 외부 클라이언트 접근, 클라이언트가 '접근 가능'한 공인 IP또는 DNS 이름을 지정
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT    # 각 리스너가 사용할 보안 프로토콜 지정
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT                                       # 브로커간 통신에서 사용할 리스너
       KAFKA_LOG_DIRS: /var/lib/kafka/data                                               # 브로커 데이터가 저장될 디렉토리
@@ -20,6 +38,7 @@ services:
       KAFKA_NODE_ID: 1                                                                  # 노드 ID 추가
       KAFKA_CONTROLLER_QUORUM_BOOTSTRAP_SERVERS: "kafka:9093"                       # 컨트롤러 부트스트랩 서버 설정
       KAFKA_CONTROLLER_QUORUM_VOTERS: "1@kafka:9093"                                # 노드 ID@컨트롤러 주소 형식
+      AUTO_CREATE_TOPICS_ENABLE: true
     volumes:
       - kafka_data:/var/lib/kafka/data
     networks:
@@ -33,15 +52,24 @@ services:
     ports:
       - "8080:8080"
     depends_on:
-      - kafka
+      kafka:
+        condition: service_started
+      mariaDB_database:
+        condition: service_healthy
     networks:
       - kafka
     environment:
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      SPRING_DATASOURCE_URL: jdbc:mariadb://mariaDB_database:3306/kafka
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+    restart: on-failure
 
 
+# 네임드 볼륨 정의 => 컨테이너가 삭제되더라도 데이터 유지
 volumes:
-  kafka_data: # 네임드 볼륨 정의
+  kafka_data:
+  mariadb-data:
 
 networks:
   kafka:

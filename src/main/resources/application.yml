@@ -4,3 +4,18 @@ server:
 spring:
   kafka:
     bootstrap-servers: kafka:9092
+
+  datasource:
+    url: jdbc:mariadb://mariaDB_database:3306/kafka
+    username: root
+    password: root
+    driver-class-name: org.mariadb.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    properties:
+      hibernate:
+        format_sql: true
+        show_sql: true
+        dialect: org.hibernate.dialect.MariaDBDialect
