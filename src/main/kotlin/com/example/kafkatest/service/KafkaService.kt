@@ -1,5 +1,6 @@
 package com.example.kafkatest.service
 
+import org.springframework.kafka.annotation.KafkaListener
 import org.springframework.kafka.core.KafkaTemplate
 import org.springframework.kafka.support.SendResult
 import org.springframework.stereotype.Service
@@ -12,16 +13,13 @@ class KafkaService(
 ) {
 
     fun sendMessage(topic:String, message:String): String {
-        val send: CompletableFuture<SendResult<String, String>> = kafkaTemplate.send(topic, message)
+        kafkaTemplate.send(topic, message)
 
-        try {
-            val get = send.get()
-            println("Message sent ${get.producerRecord}")
-            kafkaTemplate.flush()
-            return "success"
-        } catch (e: Exception) {
-            println("failed ${e.message}")
-            return "failed to send message"
-        }
+        return message
+    }
+
+    @KafkaListener(topics = ["\${kafka.consumer.topic}"], groupId = "\${spring.kafka.consumer.group-id}")
+    fun listen(message: String) {
+        println("Received message: $message")
     }
 }

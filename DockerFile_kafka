@@ -1,0 +1,5 @@
+FROM apache/kafka:3.8.0
+
+COPY --chmod=0755 init-scripts/kafka-entrypoint.sh /usr/local/bin/kafka-entrypoint.sh
+
+ENTRYPOINT ["/bin/sh", "-c", "/usr/local/bin/kafka-entrypoint.sh"]

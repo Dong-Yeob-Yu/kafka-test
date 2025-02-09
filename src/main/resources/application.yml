@@ -4,6 +4,12 @@ server:
 spring:
   kafka:
     bootstrap-servers: kafka:9092
+    listener:
+      missing-topics-fatal: false
+    consumer:
+      enable-auto-commit: true
+      auto-offset-reset: earliest     # 이전 메시지까지 읽음
+      group-id: group-id
 
   datasource:
     url: jdbc:mariadb://mariaDB_database:3306/kafka
@@ -19,3 +25,7 @@ spring:
         format_sql: true
         show_sql: true
         dialect: org.hibernate.dialect.MariaDBDialect
+
+kafka:
+  consumer:
+    topic: test-topic
